@@ -195,6 +195,11 @@ c5378b62028c920cb11e4803327983fee2f2cdff5dc89c708e39da417e51c854
 
 ## Lossless pixel viewer
 
+![A turning view received from the Luckfox by the lossless pixel viewer](images/doom-viewer-turning.png)
+
+*A live SSH frame captured from the viewer's render surface at 3x integer scale.
+See [what made it smooth](../README.md#what-made-it-smooth) for the optimization details.*
+
 Rebuild and deploy the current binary using the instructions above, then install
 the viewer dependency on your computer (nothing new is needed on the board):
 

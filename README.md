@@ -57,6 +57,12 @@ captured from the board, with the received terminal data decoded into PNG files.
 
 ### Smooth 60-fps pixel window
 
+![Lossless pixel viewer displaying E1M1 from the Luckfox](docs/images/doom-viewer-e1m1.png)
+
+*Captured from the viewer's render surface using a live framebuffer received from
+the board over SSH, enlarged 3x with nearest-neighbour scaling. No desktop chrome
+or personal information is included.*
+
 For faster pixels, use the separate lossless viewer. ASCII and Sixel remain available.
 
 ```sh
@@ -76,6 +82,38 @@ connections can be slower. This is not a guarantee of 60 fps throughout every ma
 Held keys work normally in this window. Close the window to disconnect, or quit
 through Doom's menu. Save through the menu before closing. See the
 [viewer guide](docs/INSTALL.md#lossless-pixel-viewer) for requirements and details.
+
+### What made it smooth?
+
+The main bottleneck was getting frames into the terminal. The optimizations came
+in two stages, with the game and audio synthesis still running on the Luckfox:
+
+1. **Make Sixel cheaper.** Buffer output in 16 KiB chunks, replace repeated
+   `printf` formatting with simple integer encoding, and apply horizontal scaling
+   to encoded runs instead of processing duplicate columns. Skip the unused RGB
+   framebuffer conversion and remove the extra 15-Hz display limiter. The encoder
+   produces identical graphics bytes; this raised the measured E1M1 rate from
+   about 5.4 to 21.2 frames/s with audio.
+2. **Send pixels directly.** The separate viewer receives 64,000 pixel indices
+   plus the full 256-colour RGB palette per frame through a binary SSH channel.
+   This removes Sixel encoding and terminal parsing. The computer performs only
+   palette display and integer scaling; the board still renders the scene.
+3. **Render motion at 60 Hz.** Keep gameplay at its original 35 ticks/s, but render
+   intermediate camera and object positions between ticks. Pace presentation at
+   60 fps. This preserves gameplay speed and produces distinct views while
+   turning, rather than simply repeating the same frames. Original sprite,
+   weapon, and moving-sector animation timing remains unchanged.
+4. **Keep input and playback responsive.** Send explicit key presses/releases,
+   show the newest received frame instead of accumulating a display backlog, and
+   keep audio on its separate SSH connection. On Windows, background audio
+   processes are detached from the game's console to avoid changing its modes.
+
+The viewer sustained **60.00 source frames/s over 65 seconds in E1M1 with music
+and effects**. A turning sample contained 65 distinct frames out of 65.
+Sampled temperature peaked at **45.2 degrees C** using the normal `ondemand`
+governor. No overclock, NPU, hardware video encoder, lossy compression, resolution
+reduction, or palette reduction was needed. These measurements are specific to
+the tested scene and connection; monitor presentation timing was not measured.
 
 ## Controls
 
