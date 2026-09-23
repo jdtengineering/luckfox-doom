@@ -1,0 +1,23 @@
+#!/bin/sh
+# Fit the ASCII renderer (two terminal columns per pixel) to the SSH PTY.
+set -eu
+if ! test -t 0; then
+    echo "Run with a terminal: ssh -t root@luckfox doom" >&2
+    exit 1
+fi
+cd /opt/doom
+size=$(stty size)
+rows=${size% *}
+cols=${size#* }
+[ "$rows" -gt 1 ] || rows=25
+[ "$cols" -gt 0 ] || cols=80
+scale=$(( (640 + cols - 1) / cols ))
+y_scale=$(( (200 + rows - 2) / (rows - 1) ))
+[ "$scale" -ge "$y_scale" ] || scale=$y_scale
+[ "$scale" -ge 4 ] || scale=4
+saved=$(stty -g)
+trap 'stty "$saved"; printf "\033[0m\033[?25h\033[?1049l"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM HUP
+printf '\033[?1049h'
+./doom-ascii -iwad doom1.wad -config .default.cfg -fixgamma -scaling "$scale" "$@"

@@ -5,3 +5,9 @@ build/
 compile_commands.json
 doom_ascii/
 release/
+
+*.wad
+*.lmp
+*.dsg
+.savegame/
+*.download
