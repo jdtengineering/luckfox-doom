@@ -17,9 +17,11 @@ class SixelTests(unittest.TestCase):
             subprocess.run([os.environ.get("CC", "cc"), "-O2", "-std=c99", "-Wall", "-Wextra",
                             "-I", str(ROOT / "src"), str(ROOT / "tests/sixel_harness.c"),
                             str(ROOT / "src/doomgeneric_sixel.c"), "-o", binary], check=True)
-            for argument, scale in [(1, 1), (2, 2), (3, 3), (0, 2), (4, 2)]:
-                with self.subTest(argument=argument):
-                    stream = subprocess.check_output([binary, "-pixel-scale", str(argument)])
+            cases = [(a, s, p) for a, s in [(1, 1), (2, 2), (3, 3), (0, 2), (4, 2)]
+                     for p in range(3)]
+            for argument, scale, pattern in cases:
+                with self.subTest(argument=argument, pattern=pattern):
+                    stream = subprocess.check_output([binary, "-pixel-scale", str(argument), str(pattern)])
                     self.assertTrue(stream.startswith(b"\x1b[2J\x1b[H\x1bP0;0;0q"))
                     self.assertTrue(stream.endswith(b"\x1b\\"))
                     body = stream[len(b"\x1b[2J\x1b[H\x1bP0;0;0q"):-2].decode("ascii")
@@ -57,7 +59,9 @@ class SixelTests(unittest.TestCase):
                                     output[offset:offset+count] = bytes([colour]) * count
                                     coverage[offset:offset+count] = b"\1" * count
                             x += count
-                    expected = bytes(((x // scale) * 17 + (y // scale) * 31) & 255
+                    expected = bytes(37 if pattern == 1 else
+                                     ((x // scale // 7 + y // scale // 3) & 255) if pattern == 2 else
+                                     ((x // scale) * 17 + (y // scale) * 31) & 255
                                      for y in range(height) for x in range(width))
                     self.assertEqual(coverage.count(0), 0, "Unpainted pixels")
                     self.assertEqual(output, expected)

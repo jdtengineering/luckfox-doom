@@ -177,8 +177,8 @@ this Linux backend, not by the upstream native Windows build.
 
 The stream uses about 0.7 Mbit/s before SSH overhead. Graphics and audio travel
 on separate connections and do not have a shared playback clock; network stalls
-can produce latency or gaps. Frames are capped near 15/s, with a lower achieved
-rate when synthesizing music. This is a small embedded board, not a low-latency
+can produce latency or gaps. Sixel presents each rendered game frame; the
+achieved rate depends on the scene, SSH connection, and terminal. This is a small embedded board, not a low-latency
 gaming system. The implemented music reader supports Doom's MUS format; MIDI
 music in custom WADs is not currently supported.
 
@@ -229,6 +229,25 @@ colour frames, and verified Ctrl+C cleanup. The README image is a PNG rendering
 of a complete frame received from the board's SSH terminal, not a local PC game.
 
 ## Renderer regression test
+
+### Performance measurements
+
+On a Pico Plus, a 22-second E1M1 session with music and effects improved from
+approximately 5.4 to 21.2 received Sixel frames/s after buffering the encoder,
+encoding horizontal runs at native width, avoiding the unused RGB copy, and
+removing the extra 15 Hz frame limiter. This measures SSH reception, not the
+Windows display refresh rate; other scenes and terminals can differ.
+The encoder preserves the output bytes at each pixel scale. The tests also
+cover solid colours and short/long runs as well as a 256-colour pattern.
+
+The image exposes 408, 600, 816, and 1104 MHz CPU settings. Holding 1104 MHz
+with the performance governor gave only a small gain in the intermediate
+build (11.8 to 12.3 frames/s); the board was returned to `ondemand`.
+Short gameplay tests peaked at 46.4 degrees C, below this image's first
+75-degree thermal trip. These are short measurements, not a thermal soak test.
+No voltage, clock-table, or thermal-protection changes were made.
+
+### Running the tests
 
 On a Linux computer with a C compiler and Python 3:
 

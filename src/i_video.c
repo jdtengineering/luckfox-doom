@@ -218,6 +218,12 @@ void I_FinishUpdate (void)
     int y;
     unsigned char *line_in, *line_out;
 
+    // Sixel consumes the indexed framebuffer directly; no RGB copy is needed.
+    if (M_CheckParm("-sixel")) {
+        DG_DrawFrame();
+        return;
+    }
+
     /* DRAW SCREEN */
     line_in  = (unsigned char *) I_VideoBuffer;
     line_out = (unsigned char *) DG_ScreenBuffer;

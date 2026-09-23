@@ -10,6 +10,34 @@
 #include <string.h>
 
 static unsigned char palette[256][3];
+static char output[16384];
+static unsigned output_used;
+
+static void FlushOutput(void)
+{
+    if (output_used) fwrite(output, 1, output_used, stdout);
+    output_used = 0;
+}
+
+static void Emit(char c)
+{
+    if (output_used == sizeof output) FlushOutput();
+    output[output_used++] = c;
+}
+
+// Sixel integers are nonnegative; avoid printf's format parsing in the hot loop.
+static void Number(unsigned value)
+{
+    char digits[10];
+    unsigned count = 0;
+    do { digits[count++] = '0' + value % 10; value /= 10; } while (value);
+    while (count) Emit(digits[--count]);
+}
+
+static void Text(const char *text)
+{
+    while (*text) Emit(*text++);
+}
 
 void DG_SetSixelColor(unsigned index, unsigned r, unsigned g, unsigned b)
 {
@@ -20,14 +48,12 @@ void DG_SetSixelColor(unsigned index, unsigned r, unsigned g, unsigned b)
 
 void DG_DrawSixel(void)
 {
-    static unsigned char planes[256][SCREENWIDTH * 3];
-    static uint32_t previous_ms;
+    // Horizontal scaling is applied to runs, so only encode native columns.
+    static unsigned char planes[256][SCREENWIDTH];
     static int scale;
     static int first_frame = 1;
-    uint32_t ms = DG_GetTicksMs();
-    // Limit terminal traffic while leaving game simulation and input responsive.
-    if (previous_ms && (uint32_t)(ms - previous_ms) < 66) return;
-    previous_ms = ms;
+    // The game loop already waits for simulation ticks. Present every rendered
+    // frame instead of discarding frames with an additional 15 Hz limiter.
     if (!scale) {
         int arg = M_CheckParmWithArgs("-pixel-scale", 1);
         scale = arg ? atoi(myargv[arg + 1]) : 2;
@@ -35,21 +61,24 @@ void DG_DrawSixel(void)
     }
     unsigned width = SCREENWIDTH * scale, height = SCREENHEIGHT * scale;
     if (first_frame) {
-        fputs("\033[2J", stdout);
+        Text("\033[2J");
         first_frame = 0;
     }
     // Anchor every frame; declare square pixels, opaque background, exact raster size.
-    printf("\033[H\033P0;0;0q\"1;1;%u;%u", width, height);
-    for (unsigned c = 0; c < 256; ++c)
-        printf("#%u;2;%u;%u;%u", c, (palette[c][0] * 100 + 127) / 255,
-               (palette[c][1] * 100 + 127) / 255, (palette[c][2] * 100 + 127) / 255);
+    Text("\033[H\033P0;0;0q\"1;1;"); Number(width); Emit(';'); Number(height);
+    for (unsigned c = 0; c < 256; ++c) {
+        Emit('#'); Number(c); Text(";2");
+        for (unsigned component = 0; component < 3; ++component) {
+            Emit(';'); Number((palette[c][component] * 100 + 127) / 255);
+        }
+    }
     for (unsigned band = 0; band < height; band += 6) {
         unsigned ends[256] = {0};
         memset(planes, 0, sizeof planes);
         for (unsigned bit = 0; bit < 6 && band + bit < height; ++bit) {
             const unsigned char *row = I_VideoBuffer + ((band + bit) / scale) * SCREENWIDTH;
-            for (unsigned x = 0; x < width; ++x) {
-                unsigned c = row[x / scale];
+            for (unsigned x = 0; x < SCREENWIDTH; ++x) {
+                unsigned c = row[x];
                 planes[c][x] |= 1U << bit;
                 if (ends[c] < x + 1) ends[c] = x + 1;
             }
@@ -57,21 +86,22 @@ void DG_DrawSixel(void)
         int first = 1;
         for (unsigned c = 0; c < 256; ++c) {
             if (!ends[c]) continue;
-            if (!first) putchar('$');
+            if (!first) Emit('$');
             first = 0;
-            printf("#%u", c);
+            Emit('#'); Number(c);
             for (unsigned x = 0; x < ends[c];) {
                 unsigned end = x + 1;
                 unsigned char value = planes[c][x];
                 while (end < ends[c] && planes[c][end] == value) ++end;
-                unsigned count = end - x;
-                if (count >= 4) printf("!%u%c", count, value + 63);
-                else while (count--) putchar(value + 63);
+                unsigned count = (end - x) * scale;
+                if (count >= 4) { Emit('!'); Number(count); Emit(value + 63); }
+                else while (count--) Emit(value + 63);
                 x = end;
             }
         }
-        if (band + 6 < height) putchar('-');
+        if (band + 6 < height) Emit('-');
     }
-    fputs("\033\\", stdout);
+    Text("\033\\");
+    FlushOutput();
     fflush(stdout);
 }
