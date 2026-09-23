@@ -18,6 +18,8 @@ jobs:
         run: python3 tests/test_sixel.py
       - name: Verify music parser and stereo mixer
         run: python3 tests/test_audio.py
+      - name: Verify audio output isolation
+        run: python3 tests/test_launcher.py
 
   compile_win:
     name: Compile (${{ matrix.target }})

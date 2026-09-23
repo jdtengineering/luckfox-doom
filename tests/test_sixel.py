@@ -20,9 +20,9 @@ class SixelTests(unittest.TestCase):
             for argument, scale in [(1, 1), (2, 2), (3, 3), (0, 2), (4, 2)]:
                 with self.subTest(argument=argument):
                     stream = subprocess.check_output([binary, "-pixel-scale", str(argument)])
-                    self.assertTrue(stream.startswith(b"\x1b[H\x1bP0;0;0q"))
+                    self.assertTrue(stream.startswith(b"\x1b[2J\x1b[H\x1bP0;0;0q"))
                     self.assertTrue(stream.endswith(b"\x1b\\"))
-                    body = stream[len(b"\x1b[H\x1bP0;0;0q"):-2].decode("ascii")
+                    body = stream[len(b"\x1b[2J\x1b[H\x1bP0;0;0q"):-2].decode("ascii")
                     width, height = 320 * scale, 200 * scale
                     output = bytearray(width * height)
                     coverage = bytearray(width * height)

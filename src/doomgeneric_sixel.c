@@ -23,6 +23,7 @@ void DG_DrawSixel(void)
     static unsigned char planes[256][SCREENWIDTH * 3];
     static uint32_t previous_ms;
     static int scale;
+    static int first_frame = 1;
     uint32_t ms = DG_GetTicksMs();
     // Limit terminal traffic while leaving game simulation and input responsive.
     if (previous_ms && (uint32_t)(ms - previous_ms) < 66) return;
@@ -33,6 +34,10 @@ void DG_DrawSixel(void)
         if (scale < 1 || scale > 3) scale = 2;
     }
     unsigned width = SCREENWIDTH * scale, height = SCREENHEIGHT * scale;
+    if (first_frame) {
+        fputs("\033[2J", stdout);
+        first_frame = 0;
+    }
     // Anchor every frame; declare square pixels, opaque background, exact raster size.
     printf("\033[H\033P0;0;0q\"1;1;%u;%u", width, height);
     for (unsigned c = 0; c < 256; ++c)
