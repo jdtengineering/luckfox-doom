@@ -15,8 +15,8 @@ if ($LASTEXITCODE) { throw "Binary upload failed" }
 if ($LASTEXITCODE) { throw "WAD upload failed" }
 & scp -O "$PSScriptRoot/../src/.default.cfg" "${Target}:/opt/doom/.default.cfg.dist"
 if ($LASTEXITCODE) { throw "Config upload failed" }
-& scp -O "$PSScriptRoot/doom" "${Target}:/usr/bin/doom"
+& scp -O "$PSScriptRoot/doom" "$PSScriptRoot/doom-pixels" "${Target}:/usr/bin/"
 if ($LASTEXITCODE) { throw "Launcher upload failed" }
-& ssh $Target 'set -e; cd /opt/doom; chmod 755 doom-ascii.new /usr/bin/doom; mv doom-ascii.new doom-ascii; test -f .default.cfg || cp .default.cfg.dist .default.cfg; sha256sum doom-ascii'
+& ssh $Target 'set -e; cd /opt/doom; chmod 755 doom-ascii.new /usr/bin/doom /usr/bin/doom-pixels; mv doom-ascii.new doom-ascii; test -f .default.cfg || cp .default.cfg.dist .default.cfg; sha256sum doom-ascii'
 if ($LASTEXITCODE) { throw "Install failed" }
 Write-Host "Play: ssh -t $Target doom"

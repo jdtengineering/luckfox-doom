@@ -275,6 +275,7 @@ void I_SetPalette (byte* palette)
         colors[i].r = gammatable[usegamma][*palette++];
         colors[i].g = gammatable[usegamma][*palette++];
         colors[i].b = gammatable[usegamma][*palette++];
+        DG_SetSixelColor(i, colors[i].r, colors[i].g, colors[i].b);
     }
 }
 

@@ -297,6 +297,10 @@ void DG_Init(void)
 
 void DG_DrawFrame(void)
 {
+	if (M_CheckParm("-sixel")) {
+		DG_DrawSixel();
+		return;
+	}
 	/* Clear screen if first frame */
 	static bool first_frame = true;
 	if (first_frame) {

@@ -76,7 +76,7 @@ SRC = i_main.c dummy.c am_map.c doomdef.c doomstat.c dstrings.c d_event.c d_item
 	p_user.c r_bsp.c r_data.c r_draw.c r_main.c r_plane.c r_segs.c r_sky.c r_things.c sha1.c \
 	sounds.c statdump.c st_lib.c st_stuff.c s_sound.c tables.c v_video.c wi_stuff.c \
 	w_checksum.c w_file.c w_main.c w_wad.c z_zone.c w_file_stdc.c i_input.c i_video.c \
-	doomgeneric.c doomgeneric_ascii.c
+	doomgeneric.c doomgeneric_ascii.c doomgeneric_sixel.c
 OBJS = $(SRC:%.c=$(OBJDIR)/%.o)
 
 OBJSAPP = $(APPDIR)/usr/bin/$(TARGET) $(APPDIR)/AppRun $(APPDIR)/io.github.wojciech_graj.doom_ascii.desktop $(APPDIR)/io.github.wojciech_graj.doom_ascii.png $(APPDIR)/usr/share/metainfo/io.github.wojciech_graj.doom_ascii.appdata.xml

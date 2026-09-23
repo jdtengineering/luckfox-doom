@@ -3,7 +3,7 @@
 **A tiny board. A terminal. Doom.**
 
 Play Doom over SSH on the **Luckfox Pico Plus (RV1103)**. The board runs the game;
-your computer displays its colour ASCII graphics and sends keyboard input.
+your computer displays the graphics and sends keyboard input. Choose ASCII or real pixels.
 
 ![Doom E1M1 running on a Luckfox Pico Plus over SSH](docs/images/doom-over-ssh.png)
 
@@ -36,6 +36,24 @@ Jump straight into the first level:
 ssh -t root@luckfox doom -warp 1 1 -skill 2
 ```
 
+## Real pixels over SSH
+
+![Doom rendered as real pixels through Sixel over SSH](docs/images/doom-pixels-over-ssh.png)
+
+```sh
+ssh -t root@luckfox doom-pixels
+```
+
+`doom` keeps the ASCII version. `doom-pixels` uses a separate launcher and the same
+engine, sending the original 320 x 200 framebuffer and 256-colour palette as Sixel.
+The default 2x scale displays 640 x 400 pixels; add `-pixel-scale 1` or
+`-pixel-scale 3` for 320 x 200 or 960 x 600. Output is capped at about 15 frames/s;
+actual speed depends on the board, network, and terminal.
+
+Use a **Sixel-capable terminal**, such as Windows Terminal 1.22 or newer. Ordinary
+SSH transports the graphics; no X forwarding is needed. Both images above were
+captured from the board, with the received terminal data decoded into PNG files.
+
 ## Controls
 
 | Key | Action |
@@ -56,7 +74,8 @@ Terminal key repeat approximates held keys, so controls feel different from a na
 
 | Device path | Contents |
 | --- | --- |
-| `/usr/bin/doom` | Terminal-aware launcher |
+| `/usr/bin/doom` | ASCII launcher |
+| `/usr/bin/doom-pixels` | Sixel pixel launcher |
 | `/opt/doom/doom-ascii` | ARM executable |
 | `/opt/doom/doom1.wad` | Game data |
 | `/opt/doom/.default.cfg` | Controls and settings |

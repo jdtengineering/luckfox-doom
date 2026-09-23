@@ -10,6 +10,8 @@ extern uint32_t *DG_ScreenBuffer;
 
 void DG_Init(void);
 void DG_DrawFrame(void);
+void DG_DrawSixel(void);
+void DG_SetSixelColor(unsigned index, unsigned r, unsigned g, unsigned b);
 void DG_SleepMs(uint32_t ms);
 uint32_t DG_GetTicksMs(void);
 int DG_GetKey(int *pressed, unsigned char *key);

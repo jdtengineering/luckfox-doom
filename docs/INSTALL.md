@@ -114,6 +114,20 @@ Escape opens the menu, and Ctrl+C exits. Full controls are in the [README](../RE
 The launcher calculates the display size when it starts. For best detail use at
 least 160 columns and 52 rows. Audio is not implemented by this port.
 
+### Pixel version
+
+Both installers also install the `doom-pixels` command:
+
+```sh
+ssh -t root@luckfox doom-pixels
+```
+
+Use Windows Terminal 1.22+ or another terminal supporting Sixel. Its default
+640 x 400 image needs enough visible terminal space. Add `-pixel-scale 1` for
+320 x 200, or `-pixel-scale 3` for 960 x 600. The original 256-colour game palette
+is retained. Display output is limited to about 15 frames/s. If graphics do not
+appear, use the ASCII `doom` command or switch to a Sixel-capable terminal.
+
 ## Troubleshooting
 
 | Symptom | What to check |
@@ -135,8 +149,8 @@ Validated on 2026-09-23 with Luckfox Pico Plus, Buildroot 2023.02.6, Linux
 5.10.160, ARMv7 hard-float and uClibc 1.0.31. SDK revision:
 `824b817f889c2cbff1d48fcdb18ab494a68f69d1`, compiler GCC 8.3.
 
-The stripped executable is **399,244 bytes**, dynamically needs only `libc.so.0`,
-and the tested artifact has SHA-256:
+The initial ASCII-only executable was **399,244 bytes**, dynamically needed only
+`libc.so.0`, and had this SHA-256 (the current build also includes Sixel):
 
 ```text
 066722fa0b32d70f041ae93f95e5576fb0d9dd3c8d23907031480b5fae7318f9
@@ -146,3 +160,14 @@ Rebuild hashes can vary with compiler versions and source changes. Functional
 checks used actual SSH terminals at 160 x 52 and 80 x 25, loaded E1M1, captured
 colour frames, and verified Ctrl+C cleanup. The README image is a PNG rendering
 of a complete frame received from the board's SSH terminal, not a local PC game.
+
+## Renderer regression test
+
+On a Linux computer with a C compiler and Python 3:
+
+```sh
+python3 tests/test_sixel.py
+```
+
+This compiles the real encoder, decodes its Sixel output, and checks every pixel
+and palette entry at all three scales, including invalid-scale fallback.

@@ -15,6 +15,9 @@ scale=$(( (640 + cols - 1) / cols ))
 y_scale=$(( (200 + rows - 2) / (rows - 1) ))
 [ "$scale" -ge "$y_scale" ] || scale=$y_scale
 [ "$scale" -ge 4 ] || scale=4
+for arg in "$@"; do
+    [ "$arg" != "-sixel" ] || scale=1
+done
 saved=$(stty -g)
 trap 'stty "$saved"; printf "\033[0m\033[?25h\033[?1049l"' EXIT
 trap 'exit 130' INT
