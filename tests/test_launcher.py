@@ -21,11 +21,27 @@ class LauncherTests(unittest.TestCase):
             self.assertEqual(play.main(), 0)
         receive_call, player_call = spawn.call_args_list
         log = receive_call.kwargs["stderr"]
+        self.assertEqual(receive_call.kwargs["stdin"], subprocess.DEVNULL)
         self.assertIs(player_call.kwargs["stderr"], log)
         self.assertEqual(player_call.kwargs["stdout"], subprocess.DEVNULL)
         self.assertIn("-nostats", player_call.args[0])
         self.assertTrue(log.closed)
         receiver.terminate.assert_called_once()
         player.terminate.assert_called_once()
+
+    def test_windows_audio_does_not_attach_to_game_console(self):
+        receiver, player = MagicMock(), MagicMock()
+        receiver.poll.return_value = player.poll.return_value = None
+        with patch("sys.argv", ["play.py", "--audio", "--pixels"]), \
+             patch.object(play.sys, "platform", "win32"), \
+             patch.object(play.subprocess, "CREATE_NO_WINDOW", 0x08000000, create=True), \
+             patch.object(play.shutil, "which", return_value="available"), \
+             patch.object(play.subprocess, "run"), \
+             patch.object(play.subprocess, "call", return_value=0) as game, \
+             patch.object(play.subprocess, "Popen", side_effect=[receiver, player]) as spawn:
+            self.assertEqual(play.main(), 0)
+        for child in spawn.call_args_list:
+            self.assertEqual(child.kwargs["creationflags"], 0x08000000)
+        self.assertNotIn("creationflags", game.call_args.kwargs)
 
 if __name__ == "__main__": unittest.main()

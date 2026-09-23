@@ -21,6 +21,9 @@ def main():
         parser.error("Install FFmpeg (including ffplay) on this computer for audio")
     processes = []
     audio_log = tempfile.TemporaryFile()
+    # Redirecting streams alone still leaves Windows children attached to the
+    # game console, where they can change its input/VT modes asynchronously.
+    background = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform == "win32" else {}
     try:
         if args.audio:
             # The background SSH session cannot prompt for a password.
@@ -29,12 +32,14 @@ def main():
                        "n=$((n+1)); [ $n -le 60 ] || exit 1; sleep 1; done; "
                        "exec cat /tmp/doom-audio.pcm")
             audio = subprocess.Popen(["ssh", "-T", "-o", "BatchMode=yes", args.target, command],
-                                     stdout=subprocess.PIPE, stderr=audio_log)
+                                     stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                     stderr=audio_log, **background)
             processes.append(audio)
             player = subprocess.Popen(["ffplay", "-nodisp", "-autoexit", "-nostats", "-loglevel", "error",
                                        "-f", "s16le", "-ar", "22050", "-ch_layout", "stereo",
                                        "-probesize", "32", "-analyzeduration", "0", "-i", "pipe:0"],
-                                      stdin=audio.stdout, stdout=subprocess.DEVNULL, stderr=audio_log)
+                                      stdin=audio.stdout, stdout=subprocess.DEVNULL,
+                                      stderr=audio_log, **background)
             processes.append(player)
             audio.stdout.close()
         command = "doom-pixels" if args.pixels else "doom"
