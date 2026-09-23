@@ -19,8 +19,26 @@ for arg in "$@"; do
     [ "$arg" != "-sixel" ] || scale=1
 done
 saved=$(stty -g)
-trap 'stty "$saved"; printf "\033[0m\033[?25h\033[?1049l"' EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM HUP
+game_pid=
+# End an interrupted Sixel string before restoring the terminal.
+restore_terminal() {
+    printf '\033\\'
+    printf '\033[0m\033[?25h\033[?1049l'
+    stty "$saved"
+}
+trap restore_terminal EXIT
+stop_game() {
+    if [ -n "$game_pid" ]; then
+        kill -TERM "$game_pid" 2>/dev/null || true
+        wait "$game_pid" 2>/dev/null || true
+    fi
+    exit "$1"
+}
+trap 'stop_game 130' INT
+trap 'stop_game 143' TERM HUP
 printf '\033[?1049h'
-./doom-ascii -iwad doom1.wad -config .default.cfg -fixgamma -scaling "$scale" "$@"
+exec 3<&0
+./doom-ascii -iwad doom1.wad -config .default.cfg -fixgamma -scaling "$scale" "$@" <&3 3<&- &
+game_pid=$!
+exec 3<&-
+wait "$game_pid"

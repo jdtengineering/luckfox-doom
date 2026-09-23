@@ -112,7 +112,7 @@ ssh -t root@luckfox doom
 Choose **New Game** with the arrow keys and Enter. Space shoots, E opens doors,
 Escape opens the menu, and Ctrl+C exits. Full controls are in the [README](../README.md#controls).
 The launcher calculates the display size when it starts. For best detail use at
-least 160 columns and 52 rows. Audio is not implemented by this port.
+least 160 columns and 52 rows. Optional streamed audio is described below.
 
 ### Pixel version
 
@@ -128,6 +128,71 @@ Use Windows Terminal 1.22+ or another terminal supporting Sixel. Its default
 is retained. Display output is limited to about 15 frames/s. If graphics do not
 appear, use the ASCII `doom` command or switch to a Sixel-capable terminal.
 
+## Music and sound effects
+
+The optional audio backend mixes sound effects and synthesizes the original Doom
+MUS soundtrack **on the board**. It sends 22,050 Hz, signed 16-bit little-endian
+stereo PCM through `/tmp/doom-audio.pcm`. The client receives it over a separate
+SSH connection and plays it with FFmpeg's `ffplay`. The synthesizer uses a General
+MIDI SoundFont, so the music timbre differs from the original AdLib/OPL hardware.
+
+### Requirements
+
+- **Computer:** Python 3, OpenSSH, and FFmpeg including `ffplay` on PATH.
+- **SSH:** key-based login must work (`ssh -o BatchMode=yes root@luckfox true`).
+- **Board:** about 6 MB additional flash for instruments. In the combined test,
+  roughly 16 MB RAM remained available on the 52 MB Linux system.
+
+For Ubuntu/WSL, `sudo apt install python3 ffmpeg openssh-client` installs the
+client tools. On Windows, install a full FFmpeg build that includes `ffplay`,
+then verify `ffplay -version` and `python --version` in Windows Terminal.
+
+### Install instruments once
+
+From the repository on your computer:
+
+```sh
+python scripts/fetch-soundfont.py --target root@luckfox
+```
+
+This downloads TimGM6mb from Debian, verifies the extracted SoundFont's SHA-256,
+and copies it with its copyright notice into `/opt/doom`. It requires no Debian
+package manager on the board. You can provide a different compatible SoundFont
+with the game's `-soundfont /path/to/file.sf2` option.
+
+### Play with audio
+
+```sh
+# Real pixels, music and sound effects
+python scripts/play.py --target root@luckfox --pixels --audio
+
+# ASCII, music and sound effects
+python scripts/play.py --target root@luckfox --audio
+```
+
+The helper starts the audio receiver, player, and interactive game. Ctrl+C exits;
+child processes are cleaned up. Use the game's sound menu to adjust music/effect
+volumes. Run one audio-enabled game per board at a time. Audio is supported by
+this Linux backend, not by the upstream native Windows build.
+
+The stream uses about 0.7 Mbit/s before SSH overhead. Graphics and audio travel
+on separate connections and do not have a shared playback clock; network stalls
+can produce latency or gaps. Frames are capped near 15/s, with a lower achieved
+rate when synthesizing music. This is a small embedded board, not a low-latency
+gaming system. The implemented music reader supports Doom's MUS format; MIDI
+music in custom WADs is not currently supported.
+
+### Audio verification
+
+Tests cover MUS event timing, invalid/truncated tracks, synthesizer output and
+looping, pause, stereo panning, and PCM sample values. A live combined Sixel/audio
+session produced non-silent stereo PCM; `ffplay` 8.1 successfully played it on
+Windows. Startup, Ctrl+C, and SSH disconnect cleanup were checked. TimGM6mb:
+
+```text
+c5378b62028c920cb11e4803327983fee2f2cdff5dc89c708e39da417e51c854
+```
+
 ## Troubleshooting
 
 | Symptom | What to check |
@@ -141,6 +206,8 @@ appear, use the ASCII `doom` command or switch to a Sixel-capable terminal.
 | Colours look wrong | Use a terminal with ANSI true-colour support and a dark background. |
 | SCP reports a subsystem error | Use the supplied installer or `scp -O`. |
 | Terminal stays scrambled after disconnection | Run `stty sane` in your local Unix shell, or reopen the terminal tab. |
+| No audio | Use the Python helper with `--audio`; confirm `ffplay` is on PATH and SSH key login works. |
+| Effects but no music | Install `TimGM6mb.sf2` with the helper and check the music volume. |
 | Not enough storage | Check `df -h /`; the binary plus shareware data need about 5 MB. |
 
 ## Verified build
@@ -167,6 +234,9 @@ On a Linux computer with a C compiler and Python 3:
 
 ```sh
 python3 tests/test_sixel.py
+python3 tests/test_audio.py
+# Also exercise synthesis and looping with downloaded instruments:
+python3 tests/test_audio.py _data/TimGM6mb.sf2
 ```
 
 This compiles the real encoder, decodes its Sixel output, and checks every pixel

@@ -16,6 +16,8 @@ jobs:
         run: make -j$(nproc)
       - name: Verify Sixel pixel roundtrip
         run: python3 tests/test_sixel.py
+      - name: Verify music parser and stereo mixer
+        run: python3 tests/test_audio.py
 
   compile_win:
     name: Compile (${{ matrix.target }})

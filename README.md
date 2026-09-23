@@ -10,7 +10,7 @@ your computer displays the graphics and sends keyboard input. Choose ASCII or re
 *Captured from a live 160 x 52 SSH terminal on the board; the received ANSI frame
 is rendered here as a PNG. No desktop or display server is involved.*
 
-- About **390 KiB** for the executable and **4 MiB** for the shareware episode.
+- About **422 KiB** for the executable and **4 MiB** for the shareware episode.
 - Automatically fits your terminal, with brighter colours and clean exit handling.
 - Runs on the tested Buildroot image without rebuilding Linux or adding runtime packages.
 - Based on [doom-ascii](https://github.com/wojciech-graj/doom-ascii), with its source and attribution preserved.
@@ -67,8 +67,25 @@ captured from the board, with the received terminal data decoded into PNG files.
 | Escape / Enter | Menu / select |
 | Ctrl+C | Exit immediately |
 
-Use the in-game menu to save before quitting. This port has **no audio**.
+Use the in-game menu to save before quitting. Audio is optional; see below.
 Terminal key repeat approximates held keys, so controls feel different from a native game window.
+
+## Music and sound effects
+
+Install the optional SoundFont once, then play either version with streamed audio:
+
+```sh
+python scripts/fetch-soundfont.py --target root@luckfox
+python scripts/play.py --target root@luckfox --pixels --audio
+```
+
+Leave out `--pixels` for ASCII. You need Python 3, OpenSSH, and `ffplay` (FFmpeg)
+on your computer, plus working SSH key authentication. The board synthesizes
+Doom music and mixes stereo effects; a second SSH connection sends the audio to
+your computer. No USB sound card is needed. Plain `ssh -t root@luckfox doom`
+and `doom-pixels` remain silent unless you add `-audio` and connect a listener.
+
+See the **[audio setup guide](docs/INSTALL.md#music-and-sound-effects)** for details.
 
 ## Where everything lives
 
@@ -78,6 +95,7 @@ Terminal key repeat approximates held keys, so controls feel different from a na
 | `/usr/bin/doom-pixels` | Sixel pixel launcher |
 | `/opt/doom/doom-ascii` | ARM executable |
 | `/opt/doom/doom1.wad` | Game data |
+| `/opt/doom/TimGM6mb.sf2` | Optional music instruments |
 | `/opt/doom/.default.cfg` | Controls and settings |
 | `/opt/doom/.savegame/` | Saved games |
 
@@ -94,6 +112,8 @@ See [build details and checksums](docs/INSTALL.md#verified-build).
 Built on [wojciech-graj/doom-ascii](https://github.com/wojciech-graj/doom-ascii),
 upstream revision `ce9f7eeb14cf1099b2a03007f919086a3a8be1e2`.
 Thanks to id Software, Chocolate Doom, doomgeneric, and Wojciech Graj.
+Music synthesis uses [TinySoundFont](src/third_party/README.md) (MIT) and the
+separately downloaded TimGM6mb instrument bank (GPL-2).
 See the [original README](README.upstream.md) and per-file copyright notices.
 
 Source is distributed under the [GNU GPL](LICENSE). Doom game data is separately

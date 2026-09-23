@@ -11,3 +11,6 @@ release/
 *.dsg
 .savegame/
 *.download
+*.sf2
+*.pcm
+__pycache__/

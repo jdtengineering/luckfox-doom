@@ -87,10 +87,18 @@ static int snd_sbdma = 0;
 static int snd_mport = 0;
 #endif
 
+#if !defined(_WIN32) && !defined(WIN32)
+extern sound_module_t sound_stream_module;
+extern music_module_t music_stream_module;
+#endif
+
 // Compiled-in sound modules:
 
 static sound_module_t *sound_modules[] = 
 {
+#if !defined(_WIN32) && !defined(WIN32)
+    &sound_stream_module,
+#endif
 #ifdef FEATURE_SOUND
     &sound_sdl_module,
     &sound_pcsound_module,
@@ -102,6 +110,9 @@ static sound_module_t *sound_modules[] =
 
 static music_module_t *music_modules[] =
 {
+#if !defined(_WIN32) && !defined(WIN32)
+    &music_stream_module,
+#endif
 #ifdef FEATURE_SOUND
     &music_sdl_module,
     &music_opl_module,
