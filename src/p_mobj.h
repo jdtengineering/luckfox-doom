@@ -275,7 +275,13 @@ typedef struct mobj_s
     mapthing_t		spawnpoint;	
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s*	tracer;	
+    struct mobj_s*	tracer;
+
+    // Previous simulation position, used only by the lossless stream renderer.
+    // These fields are not part of the original savegame format.
+    fixed_t render_oldx, render_oldy, render_oldz, render_oldviewz;
+    angle_t render_oldangle;
+    int render_oldtic;
     
 } mobj_t;
 

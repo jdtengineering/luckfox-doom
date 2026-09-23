@@ -1651,6 +1651,7 @@ void P_UnArchiveThinkers (void)
 	  case tc_mobj:
 	    saveg_read_pad();
 	    mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
+            memset(mobj, 0, sizeof(*mobj));
             saveg_read_mobj_t(mobj);
 
 	    mobj->target = NULL;

@@ -125,7 +125,7 @@ ssh -t root@luckfox doom-pixels
 Use Windows Terminal 1.22+ or another terminal supporting Sixel. Its default
 640 x 400 image needs enough visible terminal space. Add `-pixel-scale 1` for
 320 x 200, or `-pixel-scale 3` for 960 x 600. The original 256-colour game palette
-is retained. Display output is limited to about 15 frames/s. If graphics do not
+is retained. The optimized renderer presents every game frame. If graphics do not
 appear, use the ASCII `doom` command or switch to a Sixel-capable terminal.
 
 ## Music and sound effects
@@ -192,6 +192,58 @@ Windows. Startup, Ctrl+C, and SSH disconnect cleanup were checked. TimGM6mb:
 ```text
 c5378b62028c920cb11e4803327983fee2f2cdff5dc89c708e39da417e51c854
 ```
+
+## Lossless pixel viewer
+
+Rebuild and deploy the current binary using the instructions above, then install
+the viewer dependency on your computer (nothing new is needed on the board):
+
+```sh
+python -m pip install pygame-ce
+python scripts/play.py --target root@luckfox --viewer --audio
+```
+
+OpenSSH key authentication is required. The optional `--audio` also needs ffplay
+and the SoundFont; leave it out for silent play. `--viewer` and `--pixels` are
+alternative display modes. ASCII remains the default. There are no additional
+network ports: pixels, key events, and optional PCM use SSH connections.
+
+The viewer starts at 960 x 600 and scales by whole pixels when resized, adding
+black margins as needed. Its title reports source frames/s, not monitor refresh
+rate. Input sends actual key presses/releases, including releasing held keys when
+focus is lost. Closing the window disconnects the remote engine. Save before
+closing; window closure does not autosave.
+
+The stream preserves all 64,000 pixel indices and all 768 palette bytes per frame.
+At 60 fps it uses approximately 31 Mbit/s before SSH overhead. Rendering targets
+60 fps with camera/object position interpolation; game simulation remains 35 Hz.
+Menus, sprite animation changes, weapon animation, and moving sectors retain their
+original tick timing. No NPU/video encoder, overclock, or lossy video codec is used.
+
+Verified on the Pico Plus: 60.00 source frames/s during a 65-second E1M1 test with
+music/effects, and 65 distinct frames out of 65 sampled while turning. The Windows
+viewer rendered the received palette/framebuffer and handled key events and window
+closure in an SDL offscreen test. Temperature samples during the longer run peaked
+at 45.2 degrees C with the normal `ondemand` governor. Monitor presentation timing
+has not been measured, and this was not a long thermal soak test.
+
+### Protocol and tests
+
+The Linux-only `-pixel-stream` backend uses a non-PTY SSH channel. After optional
+startup text, `LFDOOM1\n` introduces fixed 64,776-byte frames: two little-endian
+32-bit values (frame sequence, monotonic milliseconds), 768 RGB palette bytes,
+then 64,000 row-major pixel indices. Stdin accepts two-byte key/state events.
+Diagnostics use stderr. EOF or a broken connection exits the engine.
+
+```sh
+python3 tests/test_viewer.py
+python3 tests/test_stream.py
+```
+
+Tests cover fragmented reads, truncated frames, exact C-backend pixel/palette
+roundtrip, interpolation endpoints, angle wraparound, pause/menu handling, and
+teleport/load boundaries. The source build tracks header dependencies, so changes
+to simulation structures cannot silently reuse stale object files.
 
 ## Troubleshooting
 

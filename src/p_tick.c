@@ -22,6 +22,7 @@
 #include "p_local.h"
 
 #include "doomstat.h"
+#include "doomgeneric.h"
 
 
 int	leveltime;
@@ -138,6 +139,17 @@ void P_Ticker (void)
     }
     
 		
+    if (DG_StreamActive) {
+        for (thinker_t *t = thinkercap.next; t != &thinkercap; t = t->next) {
+            if (t->function.acp1 != (actionf_p1)P_MobjThinker) continue;
+            mobj_t *mo = (mobj_t *)t;
+            mo->render_oldx = mo->x; mo->render_oldy = mo->y; mo->render_oldz = mo->z;
+            mo->render_oldangle = mo->angle;
+            mo->render_oldviewz = mo->player ? mo->player->viewz : mo->z;
+            mo->render_oldtic = leveltime + 1;
+        }
+    }
+
     for (i=0 ; i<MAXPLAYERS ; i++)
 	if (playeringame[i])
 	    P_PlayerThink (&players[i]);

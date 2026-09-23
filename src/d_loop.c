@@ -27,6 +27,7 @@
 
 #include "i_system.h"
 #include "i_timer.h"
+#include "doomgeneric.h"
 #include "i_video.h"
 
 #include "m_argv.h"
@@ -733,6 +734,9 @@ void TryRunTics (void)
     lowtic = GetLowTic();
 
     availabletics = lowtic - gametic/ticdup;
+
+    // The stream viewer renders between tics; simulation/input stay at 35 Hz.
+    if (DG_StreamActive && !singletics && availabletics < 1) return;
 
     // decide how many tics to run
 

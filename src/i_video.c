@@ -219,7 +219,7 @@ void I_FinishUpdate (void)
     unsigned char *line_in, *line_out;
 
     // Sixel consumes the indexed framebuffer directly; no RGB copy is needed.
-    if (M_CheckParm("-sixel")) {
+    if (DG_StreamActive || M_CheckParm("-sixel")) {
         DG_DrawFrame();
         return;
     }
@@ -282,6 +282,7 @@ void I_SetPalette (byte* palette)
         colors[i].g = gammatable[usegamma][*palette++];
         colors[i].b = gammatable[usegamma][*palette++];
         DG_SetSixelColor(i, colors[i].r, colors[i].g, colors[i].b);
+        DG_SetStreamColor(i, colors[i].r, colors[i].g, colors[i].b);
     }
 }
 

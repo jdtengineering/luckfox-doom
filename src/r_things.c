@@ -34,6 +34,7 @@
 #include "r_local.h"
 
 #include "doomstat.h"
+#include "r_interpolate.h"
 
 
 
@@ -443,6 +444,16 @@ R_DrawVisSprite
 //
 void R_ProjectSprite (mobj_t* thing)
 {
+    mobj_t rendered;
+    fixed_t fraction = R_MotionFraction(thing);
+    if (fraction != FRACUNIT) {
+        rendered = *thing;
+        rendered.x = R_MotionLerp(thing->render_oldx, thing->x, fraction);
+        rendered.y = R_MotionLerp(thing->render_oldy, thing->y, fraction);
+        rendered.z = R_MotionLerp(thing->render_oldz, thing->z, fraction);
+        rendered.angle = R_MotionAngle(thing->render_oldangle, thing->angle, fraction);
+        thing = &rendered;
+    }
     fixed_t		tr_x;
     fixed_t		tr_y;
 

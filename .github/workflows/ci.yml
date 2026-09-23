@@ -20,6 +20,8 @@ jobs:
         run: python3 tests/test_audio.py
       - name: Verify audio output isolation
         run: python3 tests/test_launcher.py
+      - name: Verify lossless stream and interpolation
+        run: python3 tests/test_stream.py && python3 tests/test_viewer.py
 
   compile_win:
     name: Compile (${{ matrix.target }})

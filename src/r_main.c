@@ -34,6 +34,7 @@
 
 #include "r_local.h"
 #include "r_sky.h"
+#include "r_interpolate.h"
 
 
 
@@ -820,6 +821,8 @@ R_PointInSubsector
 //
 // R_SetupFrame
 //
+fixed_t render_motion_fraction;
+
 void R_SetupFrame (player_t* player)
 {		
     int		i;
@@ -831,6 +834,15 @@ void R_SetupFrame (player_t* player)
     extralight = player->extralight;
 
     viewz = player->viewz;
+
+    render_motion_fraction = ((uint64_t)I_GetTimeMS() * TICRATE % 1000) * FRACUNIT / 1000;
+    fixed_t fraction = R_MotionFraction(player->mo);
+    if (fraction != FRACUNIT) {
+        viewx = R_MotionLerp(player->mo->render_oldx, viewx, fraction);
+        viewy = R_MotionLerp(player->mo->render_oldy, viewy, fraction);
+        viewz = R_MotionLerp(player->mo->render_oldviewz, viewz, fraction);
+        viewangle = R_MotionAngle(player->mo->render_oldangle, player->mo->angle, fraction) + viewangleoffset;
+    }
     
     viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
     viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];

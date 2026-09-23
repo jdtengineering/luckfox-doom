@@ -47,12 +47,35 @@ ssh -t root@luckfox doom-pixels
 `doom` keeps the ASCII version. `doom-pixels` uses a separate launcher and the same
 engine, sending the original 320 x 200 framebuffer and 256-colour palette as Sixel.
 The default 2x scale displays 640 x 400 pixels; add `-pixel-scale 1` or
-`-pixel-scale 3` for 320 x 200 or 960 x 600. Output is capped at about 15 frames/s;
+`-pixel-scale 3` for 320 x 200 or 960 x 600. An optimized build measured about
+21 frames/s with music and effects in E1M1;
 actual speed depends on the board, network, and terminal.
 
 Use a **Sixel-capable terminal**, such as Windows Terminal 1.22 or newer. Ordinary
 SSH transports the graphics; no X forwarding is needed. Both images above were
 captured from the board, with the received terminal data decoded into PNG files.
+
+### Smooth 60-fps pixel window
+
+For faster pixels, use the separate lossless viewer. ASCII and Sixel remain available.
+
+```sh
+python -m pip install pygame-ce
+python scripts/play.py --target root@luckfox --viewer --audio
+```
+
+The board still runs Doom and synthesizes audio. The viewer receives the exact
+320 x 200 indexed framebuffer and full RGB palette over SSH, then enlarges it
+with integer nearest-neighbour scaling. No video compression or colour reduction.
+Camera and object positions interpolate between the original 35-Hz game ticks;
+gameplay, sprite animations, and moving sectors keep their original timing.
+The title shows the source frame rate. E1M1 measured 60 source frames/s with
+music/effects, including distinct frames while turning; demanding scenes and
+connections can be slower. This is not a guarantee of 60 fps throughout every map.
+
+Held keys work normally in this window. Close the window to disconnect, or quit
+through Doom's menu. Save through the menu before closing. See the
+[viewer guide](docs/INSTALL.md#lossless-pixel-viewer) for requirements and details.
 
 ## Controls
 

@@ -10,7 +10,9 @@ import tempfile
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", default="root@luckfox")
-    parser.add_argument("--pixels", action="store_true", help="Use Sixel graphics")
+    display = parser.add_mutually_exclusive_group()
+    display.add_argument("--pixels", action="store_true", help="Use Sixel graphics")
+    display.add_argument("--viewer", action="store_true", help="Use a separate lossless pixel window")
     parser.add_argument("--audio", action="store_true", help="Stream music and effects to ffplay")
     args = parser.parse_args()
     if args.target.startswith("-"):
@@ -42,6 +44,9 @@ def main():
                                       stderr=audio_log, **background)
             processes.append(player)
             audio.stdout.close()
+        if args.viewer:
+            import viewer
+            return viewer.run(args.target, args.audio)
         command = "doom-pixels" if args.pixels else "doom"
         if args.audio: command += " -audio"
         return subprocess.call(["ssh", "-t", args.target, command])

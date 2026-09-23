@@ -221,6 +221,10 @@ void DG_AtExit(void)
 
 void DG_Init(void)
 {
+	if (DG_InitStream()) {
+		CALL(clock_gettime(CLK, &ts_init), "DG_Init: clock_gettime error %d");
+		return;
+	}
 #ifdef OS_WINDOWS
 	const HANDLE hOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	WINDOWS_CALL(hOutputHandle == INVALID_HANDLE_VALUE, "DG_Init: %s");
@@ -297,6 +301,10 @@ void DG_Init(void)
 
 void DG_DrawFrame(void)
 {
+	if (DG_StreamActive) {
+		DG_DrawStream();
+		return;
+	}
 	if (M_CheckParm("-sixel")) {
 		DG_DrawSixel();
 		return;
@@ -632,6 +640,8 @@ static inline unsigned char convertToDoomKey(const char **const buf)
 
 void DG_ReadInput(void)
 {
+	if (DG_StreamActive)
+		return;
 	struct timespec prev_input_buffer[256];
 	memcpy(prev_input_buffer, input_buffer, sizeof(struct timespec[256]));
 
@@ -725,6 +735,8 @@ void DG_ReadInput(void)
 
 int DG_GetKey(int *const pressed, unsigned char *const doomKey)
 {
+	if (DG_StreamActive)
+		return DG_StreamKey(pressed, doomKey);
 	if (!event_buf_loc->key)
 		return 0;
 
@@ -736,6 +748,8 @@ int DG_GetKey(int *const pressed, unsigned char *const doomKey)
 
 void DG_SetWindowTitle(const char *const title)
 {
+	if (DG_StreamActive)
+		return;
 	CALL_STDOUT(fputs("\033]2;", stdout), "DG_SetWindowTitle: fputs error %d");
 	CALL_STDOUT(fputs(title, stdout), "DG_SetWindowTitle: fputs error %d");
 	CALL_STDOUT(fputs("\033\\", stdout), "DG_SetWindowTitle: fputs error %d");

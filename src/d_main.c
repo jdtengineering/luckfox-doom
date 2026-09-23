@@ -44,6 +44,7 @@
 
 #include "f_finale.h"
 #include "f_wipe.h"
+#include "doomgeneric.h"
 
 #include "m_argv.h"
 #include "m_config.h"
@@ -441,6 +442,15 @@ void D_DoomLoop (void)
 
     while (1)
     {
+		if (DG_StreamActive) {
+			static uint32_t deadline, remainder;
+			uint32_t now = DG_GetTicksMs();
+			if ((int32_t)(deadline - now) > 0) I_Sleep(deadline - now);
+			else if ((int32_t)(now - deadline) > 100) deadline = now;
+			remainder += 1000;
+			deadline += remainder / 60;
+			remainder %= 60;
+		}
 		// frame syncronous IO operations
 		I_StartFrame ();
 
